@@ -23,3 +23,39 @@ Then /I should see all the movies/ do
     step %{I should see "#{movie.title}"}
   end
 end
+
+
+Then /(.*) seed movies should exist/ do | n_seeds |
+  Movie.count.should be n_seeds.to_i
+end
+
+
+When /^I press "(.*)" button/ do |button|
+  click_button button
+end
+
+Then /I should see the following movies: (.*)$/ do |movies_list|
+  movies = movies_list.split(', ')
+  movies.each do |movie|
+    expect(page).to have_content(movie)
+  end
+end
+
+And /I should not see the following movies: (.*)$/ do |movies_list|
+  movies = movies_list.split(', ')
+  movies.each do |movie|
+    expect(page).not_to have_content(movie)
+  end
+end
+
+When(/^I check all movies$/) do
+  Movie.pluck(:rating).uniq.each do |rating| 
+    step %Q{I check "ratings_#{rating}"}
+  end
+end
+
+
+Then /^the director of "(.*)" should be "(.*)"$/ do |movie, director|
+  movie = Movie.find_by_title(movie)
+  expect(movie.director).to eq director
+end
