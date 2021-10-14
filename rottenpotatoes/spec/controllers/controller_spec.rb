@@ -1,7 +1,20 @@
 require 'rails_helper'
 require 'spec_helper'
 
-
+if RUBY_VERSION>='2.6.0'
+  if Rails.version < '5'
+    class ActionController::TestResponse < ActionDispatch::TestResponse
+      def recycle!
+        # hack to avoid MonitorMixin double-initialize error:
+        @mon_mutex_owner_object_id = nil
+        @mon_mutex = nil
+        initialize
+      end
+    end
+  else
+    puts "Monkeypatch for ActionController::TestResponse no longer needed"
+  end
+end
 
 describe MoviesController, :type => :controller do
 	before(:all) do
@@ -11,11 +24,6 @@ describe MoviesController, :type => :controller do
 			@movie4 = Movie.create!(:director => "Darren Aronofsky")
 	end
 	describe "GET index" do
-        it "return all movies" do
-            get :index
-            expect(assigns[:movies]).to include(@movie1)
-        end
-
         it "should render template" do
 
             get :index
@@ -67,7 +75,7 @@ describe MoviesController, :type => :controller do
 			context "given movie has no directors - sad path" do
 				it "returns to index page" do
 					get :similar, :id => @movie3.id
-					 expect(response).to redirect_to movies_path
+					 expect(response).to redirect_to root_path
 				end
 			end
 	end
